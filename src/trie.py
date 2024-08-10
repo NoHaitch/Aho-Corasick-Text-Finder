@@ -7,7 +7,7 @@ class TrieNode:
     Trie Node, parameter: name (default: None)
     """
 
-    def __init__(self, name=None):
+    def __init__(self, name: str | None = None):
         self.children: dict[str, TrieNode] = {}
         self.end_of_word: bool = False
         self.fail: TrieNode = None
@@ -24,13 +24,18 @@ class Trie:
         self.root = TrieNode(name="root")
 
     def insert(self, word: str) -> None:
-        """Add a word to the Trie"""
+        """
+        Add a word to the Trie
+        """
         current_node = self.root
         for i, char in enumerate(word):
             node_name = f"{word[:i+1]}"
+
             if char not in current_node.children:
                 current_node.children[char] = TrieNode(name=node_name)
+
             current_node = current_node.children[char]
+
         current_node.end_of_word = True
         current_node.output.append(word)
 
@@ -70,6 +75,7 @@ class Trie:
                     child_name = f"{char}"
                 else:
                     child_name = f"{parent_name}{char}"
+
                 graph.add_node(child_name, label=char)
                 graph.add_edge(parent_name, child_name)
                 add_edges(child_node, child_name)
@@ -99,7 +105,6 @@ class Trie:
         """
         Print Trie for Debugging
         """
-
         def print_node(node, prefix):
             end_marker = " *" if node.end_of_word else ""
             fail_marker = f" (fail: {node.fail.name})" if node.fail else ""
