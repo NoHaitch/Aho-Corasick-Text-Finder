@@ -52,15 +52,22 @@ class TrieVisualizer(tk.Tk):
         # Draw children links 
         nx.draw_networkx_edges(
             graph, pos, ax=self.ax,
-            edgelist=[(u, v) for u, v, data in graph.edges(data=True) if 'color' not in data],
+            edgelist=[(u, v) for u, v, data in graph.edges(data=True) if data.get('color') == 'black'],
             arrowstyle='->', arrowsize=50, width=2, edge_color='black', connectionstyle='arc3,rad=0'
+        )
+
+        # Draw succesfull links
+        nx.draw_networkx_edges(
+            graph, pos, ax=self.ax,
+            edgelist=[(u, v) for u, v, data in graph.edges(data=True) if data.get('color') == 'green'],
+            arrowstyle='->', edge_color='green', connectionstyle='arc3,rad=0.1', width=2, arrowsize=40
         )
 
         # Draw failure links
         nx.draw_networkx_edges(
             graph, pos, ax=self.ax,
             edgelist=[(u, v) for u, v, data in graph.edges(data=True) if data.get('color') == 'blue'],
-            arrowstyle='->', edge_color='blue', connectionstyle='arc3,rad=0', width=1, arrowsize=40
+            arrowstyle='->', edge_color='blue', connectionstyle='arc3,rad=0.05', width=1, arrowsize=40
         )
 
         # Draw edge labels

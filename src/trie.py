@@ -1,7 +1,6 @@
 from collections import deque
 import networkx as nx
 
-
 class TrieNode:
     """
     Trie Node, parameter: name (default: None)
@@ -11,7 +10,7 @@ class TrieNode:
         self.children: dict[str, TrieNode] = {}
         self.end_of_word: bool = False
         self.fail: TrieNode = None
-        self.output: str = []
+        self.output: list[str] = []  # Changed to list of strings
         self.name: str = name
 
 
@@ -22,6 +21,7 @@ class Trie:
 
     def __init__(self):
         self.root = TrieNode(name="root")
+        self.patterns = set()
 
     def insert(self, word: str) -> None:
         """
@@ -38,6 +38,7 @@ class Trie:
 
         current_node.end_of_word = True
         current_node.output.append(word)
+        self.patterns.add(word) 
 
     def build_failure_links(self) -> None:
         """
@@ -54,6 +55,7 @@ class Trie:
                 queue.append(child_node)
                 fail_node = current_node.fail
 
+                # Traverse up the tree to find the appropriate failure link
                 while fail_node is not None and char not in fail_node.children:
                     fail_node = fail_node.fail
 
@@ -63,13 +65,13 @@ class Trie:
                     child_node.fail = fail_node.children[char]
                     child_node.output.extend(child_node.fail.output)
 
-    def visualize(self) -> nx.Graph:
+    def visualize(self) -> nx.MultiDiGraph:
         """
-        Create a newtworkx graph for the trie. Used by matplotlib to visualize the trie
+        Create a networkx MultiDiGraph for the trie. Used by matplotlib to visualize the trie
         """
-        graph = nx.DiGraph()
+        graph = nx.MultiDiGraph()
 
-        def add_edges(node, parent_name):
+        def add_edges(node: TrieNode, parent_name: str):
             for char, child_node in node.children.items():
                 if parent_name == "root":
                     child_name = f"{char}"
@@ -77,13 +79,21 @@ class Trie:
                     child_name = f"{parent_name}{char}"
 
                 graph.add_node(child_name, label=char)
-                graph.add_edge(parent_name, child_name)
+                graph.add_edge(parent_name, child_name, color="black")
                 add_edges(child_node, child_name)
 
-        graph.add_node("root", label="root")
-        add_edges(self.root, "root")
+        def build_successful_links(node: TrieNode, parent_name: str):
+            for char, child_node in node.children.items():
+                child_name = f"{parent_name}{char}"
+                if "root" in child_name:
+                    child_name = child_name[4:]
 
-        def add_failure_links(node, name):
+                for successful_name in child_node.output:
+                    if successful_name != child_name:
+                        graph.add_edge(child_name, successful_name, color="green", style="solid")
+                build_successful_links(child_node, child_name)
+
+        def build_failure_links(node: TrieNode, name: str):
             for char, child_node in node.children.items():
                 child_name = f"{name}{char}"
                 if "root" in child_name:
@@ -92,12 +102,16 @@ class Trie:
                 if child_node.fail:
                     fail_name = child_node.fail.name
                     if fail_name and fail_name != name and fail_name != "root":
-                        graph.add_edge(
-                            child_name, fail_name, color="blue"
-                        )
-                add_failure_links(child_node, child_name)
+                        graph.add_edge(child_name, fail_name, color="blue")
+                    else:
+                        graph.add_edge(child_name, "root", color="blue")
+                
+                build_failure_links(child_node, child_name)
 
-        add_failure_links(self.root, "root")
+        graph.add_node("root", label="root")
+        add_edges(self.root, "root")
+        build_successful_links(self.root, "root")
+        build_failure_links(self.root, "root")
 
         return graph
 

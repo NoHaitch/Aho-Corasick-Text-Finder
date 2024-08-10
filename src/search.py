@@ -13,13 +13,12 @@ class Search:
         Reset the Trie to be empty
         """
         self.trie = Trie()
-        self.patterns = set()
+        
 
     def add_patterns(self, patterns: list[str]) -> None:
         """
         Add a new pattern to the trie and store them
         """
-        self.patterns.update(patterns) 
         for pattern in patterns:
             self.trie.insert(pattern)
         self.trie.build_failure_links()
@@ -29,7 +28,7 @@ class Search:
         Search the text using all the patterns
         """
         current_node: TrieNode = self.trie.root
-        results: dict[str, dict[str, int]] = {pattern: {"count": 0, "positions": []} for pattern in self.patterns}
+        results: dict[str, dict[str, int]] = {pattern: {"count": 0, "positions": []} for pattern in self.trie.patterns}
         position: int = 0
 
         for char in text:
