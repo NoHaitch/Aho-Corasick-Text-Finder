@@ -143,8 +143,12 @@ class AhoCorasickApp(tk.Tk):
 
     def visualize_patterns(self):
         self.search.reset()
-        text = self.text_input.get("1.0", tk.END).strip()
-        patterns = self.pattern_input.get("1.0", tk.END).strip().split(',')
+
+        rawpattern = self.pattern_input.get("1.0", tk.END).strip()
+        if not rawpattern or rawpattern == "pattern1, pattern2, pattern3, ...":
+            messagebox.showwarning("Input Error", "Pattern input cannot be empty.")
+            return
+        patterns = rawpattern.split(',')
         
         self.search.add_patterns([p.strip() for p in patterns if p.strip()])
         visualizer = TrieVisualizer(self.search.trie)
