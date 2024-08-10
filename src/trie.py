@@ -91,9 +91,9 @@ class Trie:
 
                 if child_node.fail:
                     fail_name = child_node.fail.name
-                    if fail_name and fail_name != name:
+                    if fail_name and fail_name != name and fail_name != "root":
                         graph.add_edge(
-                            child_name, fail_name, color="purple", style="dashed"
+                            child_name, fail_name, color="blue"
                         )
                 add_failure_links(child_node, child_name)
 
