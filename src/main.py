@@ -10,6 +10,9 @@ class AhoCorasickApp(tk.Tk):
         self.center_window(800, 600) 
         self.create_widgets()
         self.search = Search()
+        self.results_window = None
+
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def center_window(self, width, height):
         screen_width = self.winfo_screenwidth()
@@ -23,18 +26,18 @@ class AhoCorasickApp(tk.Tk):
     def create_widgets(self):
         # Title
         title_label = tk.Label(self, text="Aho-Corasick Pattern Search", font=("Helvetica", 20, "bold"))
-        title_label.pack(pady=(20, 20))  # Increase top and bottom padding for the title
+        title_label.pack(pady=(20, 20)) 
 
         # Text input
         text_label = tk.Label(self, text="Enter Text:", font=("Helvetica", 12), anchor='center')
         text_label.pack(anchor='center', padx=20)
         self.text_input = tk.Text(self, height=5, width=40, font=("Arial", 12), bg="#f0f0f0", padx=10, pady=10, borderwidth=2, relief="groove")
-        self.text_input.tag_configure("center", justify='center')  # Center the text
+        self.text_input.tag_configure("center", justify='center')
         self.text_input.pack(padx=20, pady=(0, 10))
         self.set_placeholder(self.text_input, "Lorem ipsum dolor sit amet, consectetur adipiscing elit...")
         
         # Pattern input
-        pattern_label = tk.Label(self, text="Enter Patterns (comma-separated):", font=("Helvetica", 12), anchor='center')
+        pattern_label = tk.Label(self, text="Enter Patterns separated with a comma:\n(case sensitive)", font=("Helvetica", 12), anchor='center')
         pattern_label.pack(anchor='center', padx=20)
         self.pattern_input = tk.Text(self, height=5, width=40, font=("Arial", 12), bg="#f0f0f0", padx=10, pady=10, borderwidth=2, relief="groove")
         self.pattern_input.tag_configure("center", justify='center')
@@ -88,17 +91,20 @@ class AhoCorasickApp(tk.Tk):
         sorted_results = sorted(results.items(), key=lambda item: item[1]['count'], reverse=True)
 
         # Create a new window to display the results
-        results_window = tk.Toplevel(self)
-        results_window.title("Search Results")
-        results_window.geometry("800x600")
-        results_window.configure(padx=20, pady=20) 
+        if self.results_window is not None:
+            self.results_window.destroy()
+
+        self.results_window = tk.Toplevel(self)
+        self.results_window.title("Search Results")
+        self.results_window.geometry("800x600")
+        self.results_window.configure(padx=20, pady=20) 
 
         # Title for results window
-        results_title_label = tk.Label(results_window, text="Result", font=("Helvetica", 16, "bold"))
+        results_title_label = tk.Label(self.results_window, text="Result", font=("Helvetica", 16, "bold"))
         results_title_label.pack(pady=(10, 20))
 
         # Frame for results
-        results_frame = tk.Frame(results_window)
+        results_frame = tk.Frame(self.results_window)
         results_frame.pack(fill=tk.BOTH, expand=True)
 
         # Results for occurrences and positions
@@ -125,7 +131,7 @@ class AhoCorasickApp(tk.Tk):
 
         
         # Highlight patterns
-        highlighted_text = tk.Text(results_window, height=15, width=80, font=("Arial", 12), bg="#ffffff", padx=10, pady=10, borderwidth=2, relief="groove")
+        highlighted_text = tk.Text(self.results_window, height=15, width=80, font=("Arial", 12), bg="#ffffff", padx=10, pady=10, borderwidth=2, relief="groove")
         highlighted_text.pack(pady=(10, 0), fill=tk.BOTH, expand=True)
 
         # Insert text and highlight patterns
@@ -153,6 +159,11 @@ class AhoCorasickApp(tk.Tk):
         self.search.add_patterns([p.strip() for p in patterns if p.strip()])
         visualizer = TrieVisualizer(self.search.trie)
         visualizer.mainloop() 
+
+    def on_closing(self):
+        if self.results_window is not None:
+            self.results_window.destroy()
+        self.destroy()
 
 if __name__ == "__main__":
     # Run the app
