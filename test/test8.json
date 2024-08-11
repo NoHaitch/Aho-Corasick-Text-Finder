@@ -1,0 +1,5 @@
+{
+    "text": "the quick brown fox jumps over the lazy dog. the dog, however, did not seem to mind. the fox continued to explore the forest.",
+    "patterns": ["fox", "dog", "forest", "jumps"]
+  }
+  

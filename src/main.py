@@ -1,17 +1,22 @@
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
+import matplotlib.pyplot as plt
+import networkx as nx
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from search import Search
-from trieVisualizer import TrieVisualizer 
+from trie import Trie
+import json
 
 class AhoCorasickApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Aho-Corasick Pattern Search")
-        self.center_window(800, 600) 
+        self.center_window(800, 600)
         self.create_widgets()
         self.search = Search()
         self.results_window = None
 
+        # Bind close event
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def center_window(self, width, height):
@@ -26,7 +31,7 @@ class AhoCorasickApp(tk.Tk):
     def create_widgets(self):
         # Title
         title_label = tk.Label(self, text="Aho-Corasick Pattern Search", font=("Helvetica", 20, "bold"))
-        title_label.pack(pady=(20, 20)) 
+        title_label.pack(pady=(20, 20))
 
         # Text input
         text_label = tk.Label(self, text="Enter Text:", font=("Helvetica", 12), anchor='center')
@@ -35,7 +40,7 @@ class AhoCorasickApp(tk.Tk):
         self.text_input.tag_configure("center", justify='center')
         self.text_input.pack(padx=20, pady=(0, 10))
         self.set_placeholder(self.text_input, "Lorem ipsum dolor sit amet, consectetur adipiscing elit...")
-        
+
         # Pattern input
         pattern_label = tk.Label(self, text="Enter Patterns separated with a comma:\n(case sensitive)", font=("Helvetica", 12), anchor='center')
         pattern_label.pack(anchor='center', padx=20)
@@ -43,16 +48,19 @@ class AhoCorasickApp(tk.Tk):
         self.pattern_input.tag_configure("center", justify='center')
         self.pattern_input.pack(padx=20, pady=(0, 20))
         self.set_placeholder(self.pattern_input, "pattern1, pattern2, pattern3, ...")
-        
-        # Search and Visualize buttons
+
+        # Buttons
         button_frame = tk.Frame(self)
         button_frame.pack(pady=20)
-        
+
         search_button = tk.Button(button_frame, text="Search", font=("Helvetica", 12), command=self.aho_corasick_search)
-        search_button.pack(side=tk.LEFT, padx=(0, 10)) 
+        search_button.pack(side=tk.LEFT, padx=(0, 10))
 
         visualize_button = tk.Button(button_frame, text="Visualize Pattern", font=("Helvetica", 12), command=self.visualize_patterns)
-        visualize_button.pack(side=tk.LEFT)
+        visualize_button.pack(side=tk.LEFT, padx=(0, 10))
+
+        json_button = tk.Button(button_frame, text="Input using JSON", font=("Helvetica", 12), command=self.input_using_json)
+        json_button.pack(side=tk.LEFT)
 
     def set_placeholder(self, text_widget, placeholder):
         # Insert placeholder text
@@ -79,12 +87,12 @@ class AhoCorasickApp(tk.Tk):
         if not text or text == "Lorem ipsum dolor sit amet, consectetur adipiscing elit...":
             messagebox.showwarning("Input Error", "Text input cannot be empty.")
             return
-        
+
         rawpattern = self.pattern_input.get("1.0", tk.END).strip()
         if not rawpattern or rawpattern == "pattern1, pattern2, pattern3, ...":
             messagebox.showwarning("Input Error", "Pattern input cannot be empty.")
             return
-        
+
         patterns = rawpattern.split(',')
         self.search.add_patterns([p.strip() for p in patterns if p.strip()])
         results = self.search.search(text)
@@ -97,7 +105,7 @@ class AhoCorasickApp(tk.Tk):
         self.results_window = tk.Toplevel(self)
         self.results_window.title("Search Results")
         self.results_window.geometry("800x600")
-        self.results_window.configure(padx=20, pady=20) 
+        self.results_window.configure(padx=20, pady=20)
 
         # Title for results window
         results_title_label = tk.Label(self.results_window, text="Result", font=("Helvetica", 16, "bold"))
@@ -124,12 +132,11 @@ class AhoCorasickApp(tk.Tk):
             for pattern, data in sorted_results:
                 results_text.insert(tk.END, f"Pattern: {pattern}\n")
                 results_text.insert(tk.END, f"Count: {data['count']}\n")
-                if(data['count'] != 0):
+                if data['count'] != 0:
                     results_text.insert(tk.END, f"Positions: {data['positions']}\n\n")
                 else:
                     results_text.insert(tk.END, "\n")
 
-        
         # Highlight patterns
         highlighted_text = tk.Text(self.results_window, height=15, width=80, font=("Arial", 12), bg="#ffffff", padx=10, pady=10, borderwidth=2, relief="groove")
         highlighted_text.pack(pady=(10, 0), fill=tk.BOTH, expand=True)
@@ -145,7 +152,7 @@ class AhoCorasickApp(tk.Tk):
                 end_idx = f"{start_idx}+{len(pattern)}c"
                 highlighted_text.tag_add(pattern, start_idx, end_idx)
                 highlighted_text.tag_configure(pattern, background="yellow", foreground="black")
-                start_idx = end_idx 
+                start_idx = end_idx
 
     def visualize_patterns(self):
         self.search.reset()
@@ -158,14 +165,226 @@ class AhoCorasickApp(tk.Tk):
         
         self.search.add_patterns([p.strip() for p in patterns if p.strip()])
         visualizer = TrieVisualizer(self.search.trie)
-        visualizer.mainloop() 
+        visualizer.grab_set()
+
+    def input_using_json(self):
+        file_path = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
+        if not file_path:
+            return
+        
+        try:
+            with open(file_path, 'r') as file:
+                data = json.load(file)
+
+            text = data.get("text", "").strip()
+            patterns = data.get("patterns", [])
+            
+            if isinstance(patterns, str):
+                patterns = patterns.split(',')
+            
+            if not text or not patterns:
+                raise ValueError("Text or patterns are missing in the JSON data.")
+
+            # Update the input fields
+            self.text_input.delete("1.0", tk.END)
+            self.text_input.insert("1.0", text)
+            self.text_input.config(fg="black")
+            
+            self.pattern_input.delete("1.0", tk.END)
+            self.pattern_input.insert("1.0", ", ".join(patterns))
+            self.pattern_input.config(fg="black")
+
+        except (json.JSONDecodeError, ValueError) as e:
+            messagebox.showerror("JSON Error", f"Invalid JSON data: {e}")
 
     def on_closing(self):
         if self.results_window is not None:
             self.results_window.destroy()
         self.destroy()
 
+class TrieVisualizer(tk.Toplevel):
+    """
+    Visualize the Aho-Corasick Trie using matplotlib and tkinter
+    """
+
+    def __init__(self, trie: Trie):
+        super().__init__()
+        self.title("Aho-Corasick Trie Visualization")
+        self.geometry("800x600")
+
+        self.trie = trie
+        self.fig, self.ax = plt.subplots(figsize=(8, 6))
+
+        # tkinter window
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        # matplotlib navigation
+        self.toolbar = NavigationToolbar2Tk(self.canvas, self)
+        self.toolbar.update()
+        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        # Create button frame
+        button_frame = tk.Frame(self)
+        button_frame.pack(side=tk.BOTTOM, fill=tk.X, pady=10)
+        
+        # Create buttons
+        self.show_success_button = tk.Button(button_frame, text="Show Successful Links", command=self.show_successful, height=2, width=20)
+        self.hide_success_button = tk.Button(button_frame, text="Hide Successful Links", command=self.hide_successful, height=2, width=20)
+        self.show_failure_button = tk.Button(button_frame, text="Show Failure Links", command=self.show_failure, height=2, width=20)
+        self.hide_failure_button = tk.Button(button_frame, text="Hide Failure Links", command=self.hide_failure, height=2, width=20)
+        self.show_normal_button = tk.Button(button_frame, text="Show Normal Links", command=self.show_normal, height=2, width=20)
+        self.hide_normal_button = tk.Button(button_frame, text="Hide Normal Links", command=self.hide_normal, height=2, width=20)
+
+        # Arrange buttons in grid
+        self.show_success_button.grid(row=0, column=0, padx=5)
+        self.hide_success_button.grid(row=0, column=1, padx=5)
+        self.show_failure_button.grid(row=0, column=2, padx=5)
+        self.hide_failure_button.grid(row=0, column=3, padx=5)
+        self.show_normal_button.grid(row=0, column=4, padx=5)
+        self.hide_normal_button.grid(row=0, column=5, padx=5)
+
+        # Center the buttons
+        button_frame.update_idletasks()
+        total_width = sum(btn.winfo_width() for btn in button_frame.winfo_children()) + 5 * (len(button_frame.winfo_children()) - 1)
+        button_frame.grid_columnconfigure((0, 1, 2, 3, 4, 5), weight=1)
+        button_frame.update()
+        button_frame_width = button_frame.winfo_width()
+        for i in range(len(button_frame.winfo_children())):
+            button_frame.grid_columnconfigure(i, weight=1)
+
+        self.show_successful_links = True
+        self.show_failure_links = True
+        self.show_normal_links = True
+
+        self.draw_graph()
+
+    def draw_graph(self) -> None:
+        """
+        Draw graph of Trie 
+        """
+
+        graph = self.trie.visualize()
+        pos = self._create_tree_layout(graph)
+
+        self.ax.clear()
+
+        # Draw Nodes 
+        nx.draw_networkx_nodes(
+            graph, pos, ax=self.ax, node_size=1500, node_color='lightcoral', edgecolors='black'
+        )
+
+        # Draw Node Labels 
+        nx.draw_networkx_labels(
+            graph, pos, ax=self.ax, font_size=10, font_color='black'
+        )
+
+        # Draw children links 
+        if self.show_normal_links:
+            nx.draw_networkx_edges(
+                graph, pos, ax=self.ax,
+                edgelist=[(u, v) for u, v, data in graph.edges(data=True) if data.get('color') == 'black'],
+                arrowstyle='->', arrowsize=50, width=2, edge_color='black', connectionstyle='arc3,rad=0'
+            )
+
+        # Draw successful links
+        if self.show_successful_links:
+            nx.draw_networkx_edges(
+                graph, pos, ax=self.ax,
+                edgelist=[(u, v) for u, v, data in graph.edges(data=True) if data.get('color') == 'green'],
+                arrowstyle='->', edge_color='green', connectionstyle='arc3,rad=0.1', width=2, arrowsize=40
+            )
+
+        # Draw failure links
+        if self.show_failure_links:
+            nx.draw_networkx_edges(
+                graph, pos, ax=self.ax,
+                edgelist=[(u, v) for u, v, data in graph.edges(data=True) if data.get('color') == 'blue'],
+                arrowstyle='->', edge_color='blue', connectionstyle='arc3,rad=0.05', width=1, arrowsize=40
+            )
+
+        # Draw edge labels
+        edge_labels = nx.get_edge_attributes(graph, 'label')
+        if edge_labels:
+            nx.draw_networkx_edge_labels(graph, pos, edge_labels=edge_labels, ax=self.ax, font_size=10)
+
+        self.canvas.draw()
+
+    def _create_tree_layout(self, graph):
+        """
+        Tree layout manually using BFS
+        """
+        
+        pos = {}
+        visited = set()
+        levels = {} 
+        level_widths = {} 
+
+        # BFS queue
+        queue = [(0, 'root')] 
+        x_positions = {}
+
+        # BFS Loop
+        while queue:
+            level, node = queue.pop(0)
+            if node in visited:
+                continue
+            visited.add(node)
+
+            # Set height position
+            pos[node] = (x_positions.get(node, 0), -level * 20)
+            if level not in levels:
+                levels[level] = []
+            levels[level].append(node)
+
+            # Enqueue children
+            children = list(graph.neighbors(node))
+            if children:
+                if level not in level_widths:
+                    level_widths[level] = 80
+                child_width = level_widths[level] / len(children)
+                for i, child in enumerate(children):
+                    x_pos = x_positions.get(node, 0) + i * child_width - level_widths[level] / 2
+                    x_positions[child] = x_pos
+                    queue.append((level + 1, child))
+
+        # Adjust positions for nodes at the same level
+        for level, nodes in levels.items():
+            layer_width = 20 
+            level_widths[level] = layer_width
+            for i, node in enumerate(nodes):
+                pos[node] = (i * layer_width - layer_width * (len(nodes) - 1) / 2, pos[node][1])
+
+        return pos
+
+    def show_successful(self):
+        self.show_successful_links = True
+        self.draw_graph()
+
+    def hide_successful(self):
+        self.show_successful_links = False
+        self.draw_graph()
+
+    def show_failure(self):
+        self.show_failure_links = True
+        self.draw_graph()
+
+    def hide_failure(self):
+        self.show_failure_links = False
+        self.draw_graph()
+
+    def show_normal(self):
+        self.show_normal_links = True
+        self.draw_graph()
+
+    def hide_normal(self):
+        self.show_normal_links = False
+        self.draw_graph()
+
+    def on_closing(self):
+        self.destroy()
+        plt.close(self.fig)
+
 if __name__ == "__main__":
-    # Run the app
     app = AhoCorasickApp()
     app.mainloop()

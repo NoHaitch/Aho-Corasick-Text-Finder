@@ -1,0 +1,4 @@
+{
+  "text": "the quick brown fox",
+  "patterns": ["quick", "fox", "brown"]
+}

@@ -123,6 +123,7 @@ Instruction to run/build/etc the program
 ### 2. Simple GUI using tkinter
 ### 3. Text Highlighting for pattern found
 ### 4. Trie visualization, with controls to show or hide the links (might need to fullscreen the program)
+### 5. Input using JSON
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
