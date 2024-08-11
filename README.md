@@ -120,9 +120,9 @@ Instruction to run/build/etc the program
 ## Features
 
 ### 1. Aho-Corasick Search
-### 4. Simple GUI using tkinter
-### 2. Text Highlighting for pattern found
-### 3. Trie visualization, with controls to show or hide the links (might need to fullscreen the program)
+### 2. Simple GUI using tkinter
+### 3. Text Highlighting for pattern found
+### 4. Trie visualization, with controls to show or hide the links (might need to fullscreen the program)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

@@ -10,7 +10,7 @@ class TrieNode:
         self.children: dict[str, TrieNode] = {}
         self.end_of_word: bool = False
         self.fail: TrieNode = None
-        self.output: list[str] = []  # Changed to list of strings
+        self.output: list[str] = []
         self.name: str = name
 
 
@@ -55,7 +55,6 @@ class Trie:
                 queue.append(child_node)
                 fail_node = current_node.fail
 
-                # Traverse up the tree to find the appropriate failure link
                 while fail_node is not None and char not in fail_node.children:
                     fail_node = fail_node.fail
 
