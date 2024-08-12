@@ -42,7 +42,7 @@ class AhoCorasickApp(tk.Tk):
         self.set_placeholder(self.text_input, "Lorem ipsum dolor sit amet, consectetur adipiscing elit...")
 
         # Pattern input
-        pattern_label = tk.Label(self, text="Enter Patterns separated with a comma:\n(case sensitive)", font=("Helvetica", 12), anchor='center')
+        pattern_label = tk.Label(self, text="Enter Patterns separated with a comma:\n", font=("Helvetica", 12), anchor='center')
         pattern_label.pack(anchor='center', padx=20)
         self.pattern_input = tk.Text(self, height=5, width=40, font=("Arial", 12), bg="#f0f0f0", padx=10, pady=10, borderwidth=2, relief="groove")
         self.pattern_input.tag_configure("center", justify='center')
@@ -93,9 +93,9 @@ class AhoCorasickApp(tk.Tk):
             messagebox.showwarning("Input Error", "Pattern input cannot be empty.")
             return
 
-        patterns = rawpattern.split(',')
-        self.search.add_patterns([p.strip() for p in patterns if p.strip()])
-        results = self.search.search(text)
+        patterns = rawpattern.lower().split(',')
+        self.search.add_patterns([p.strip().lower() for p in patterns if p.strip()])
+        results = self.search.search(text.lower())
         sorted_results = sorted(results.items(), key=lambda item: item[1]['count'], reverse=True)
 
         # Create a new window to display the results
@@ -146,13 +146,14 @@ class AhoCorasickApp(tk.Tk):
         for pattern in results.keys():
             start_idx = '1.0'
             while True:
-                start_idx = highlighted_text.search(pattern, start_idx, tk.END)
+                start_idx = highlighted_text.search(pattern, start_idx, tk.END, nocase=True)
                 if not start_idx:
                     break
                 end_idx = f"{start_idx}+{len(pattern)}c"
                 highlighted_text.tag_add(pattern, start_idx, end_idx)
                 highlighted_text.tag_configure(pattern, background="yellow", foreground="black")
                 start_idx = end_idx
+
 
     def visualize_patterns(self):
         self.search.reset()
@@ -161,7 +162,7 @@ class AhoCorasickApp(tk.Tk):
         if not rawpattern or rawpattern == "pattern1, pattern2, pattern3, ...":
             messagebox.showwarning("Input Error", "Pattern input cannot be empty.")
             return
-        patterns = rawpattern.split(',')
+        patterns = rawpattern.lower().split(',')
         
         self.search.add_patterns([p.strip() for p in patterns if p.strip()])
         visualizer = TrieVisualizer(self.search.trie)

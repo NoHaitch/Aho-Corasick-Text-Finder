@@ -30,6 +30,7 @@ class Search:
         current_node: TrieNode = self.trie.root
         results: dict[str, dict[str, int]] = {pattern: {"count": 0, "positions": []} for pattern in self.trie.patterns}
         position: int = 0
+        text = text.lower()
 
         for char in text:
             while current_node is not None and char not in current_node.children:
