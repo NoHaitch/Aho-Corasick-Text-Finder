@@ -43,18 +43,29 @@ class Search:
             current_node = current_node.children.get(char)
             
             if current_node:
+                # Use a set to track which patterns have been counted at the current position
+                counted_patterns = set()
+                
+                # Check current node
                 if current_node.end_of_word:
                     for pattern in current_node.output:
-                        results[pattern]["count"] += 1
-                        results[pattern]["positions"].append(position)
+                        if pattern not in counted_patterns:
+                            results[pattern]["count"] += 1
+                            results[pattern]["positions"].append(position)
+                            counted_patterns.add(pattern)
 
+                # Check failure links
                 temp_node = current_node.fail
                 while temp_node is not None:
                     if temp_node.end_of_word:
                         for pattern in temp_node.output:
-                            results[pattern]["count"] += 1
-                            results[pattern]["positions"].append(position)
+                            if pattern not in counted_patterns:
+                                results[pattern]["count"] += 1
+                                results[pattern]["positions"].append(position)
+                                counted_patterns.add(pattern)
                     temp_node = temp_node.fail
+
             position += 1
 
         return results
+
